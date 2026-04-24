@@ -5,6 +5,31 @@ def user_information(user_dictionary):
     user_dictionary["Number"] = input("Phone Number: ") # Doesn't like the numbers starting with 0, change to start with "64"
     return user_dictionary
 
+def print_food_menu(menu):
+    number = 1
+    for item in menu: # Extracts food items from meun_items (eg, "Dalh with Rice", "Risoto" etc.)
+        
+        options = ""
+        for option in menu[item]: # Extracts the next option in the values lists  (eg, "V", "VE", etc.)
+            options =  options + ", " + option # Added all previously extracted options, a ", " and the new options
+        
+        print(f"    {number}. {item} ({options[2:]})") # String splice removes extra ", " for the start of the options string
+        number += 1
+    
+    print(f"Or:\n   {number}. Save & Continue")
+
+    return number
+
+def print_food_options(menu, key):
+    number = 1
+    for option in menu[key]:
+        print(f"    {number}. {option}")
+        number += 1
+    
+    print(f"Or:\n   {number}. To Main Menu")
+
+    return number
+
 # Collects order
 def ordering_information(user_dictionary):
     menu_items = {
@@ -16,25 +41,41 @@ def ordering_information(user_dictionary):
 
     while True:
         print("Food items avalibles:")
-        
-        number = 1
-        for item in menu_items: # Extracts food items from meun_items (eg, "Dalh with Rice", "Risoto" etc.)
-            options = ""
-            for option in menu_items[item]: # Extracts the next option in the values lists  (eg, "V", "VE", etc.)
-                options =  options + ", " + option # Added all previously extracted options, a ", " and the new options
+
+        continue_number = print_food_menu(menu_items) # prints all food items, returns the number associated with the "Save & Continue" option
+        user_answer = int(input("> "))
+
+        if user_answer > 0 and user_answer < continue_number: # Checks if user wants to view a food item
             
-            print(f"    {number}. {item} ({options[2:]})") # String splice removes extra ", " for the start of the options string
-            number += 1
-        
-        print(f"Or:\n   {number}. Save & Continue")
-        input("> ")
+            """Converts to keys"""
+            list_of_items = list(menu_items.keys()) # Converts the number to the key associated with it
+            item = list_of_items[user_answer - 1]
+            print(item)
 
-
+            options_dictionary = {}
             
+            while True:
+                """Prints food options (eg, V, VE, M)"""
+                back_number = print_food_options(menu_items, item)
+                user_answer = input("> ")
 
+                if user_answer > 0 and user_answer < back_number:
 
+                    """Converts to keys"""
+                    list_of_options = menu_items[item]
+                    option = list_of_options[user_answer]
 
-        break
+                    option_amount = int(input("Amount: "))
+                    options_dictionary[option] = option_amount
+        
+        if user_answer == continue_number:
+
+            print(user_dictionary)
+
+            break
+
+        else:
+            print(f"Please enter a number between 1 and {continue_number}.")
 
 # Devlivery/pick up information
 def delivery_infromation(user_dictionary):
