@@ -39,34 +39,43 @@ def ordering_information(user_dictionary):
         "Lasagna" : ["M", "V"]
     }
 
+    for item in menu_items:
+        user_dictionary[item] = {}
+
     while True:
+
         print("Food items avalibles:")
 
         continue_number = print_food_menu(menu_items) # prints all food items, returns the number associated with the "Save & Continue" option
         user_answer = int(input("> "))
 
-        if user_answer > 0 and user_answer < continue_number: # Checks if user wants to view a food item
+        if user_answer > 0 and user_answer < continue_number: # View a food item
             
             """Converts to keys"""
             list_of_items = list(menu_items.keys()) # Converts the number to the key associated with it
             item = list_of_items[user_answer - 1]
             print(item)
 
-            options_dictionary = {}
-            
             while True:
                 """Prints food options (eg, V, VE, M)"""
                 back_number = print_food_options(menu_items, item)
-                user_answer = input("> ")
+                user_answer = int(input("> "))
 
                 if user_answer > 0 and user_answer < back_number:
 
                     """Converts to keys"""
                     list_of_options = menu_items[item]
-                    option = list_of_options[user_answer]
+                    option = list_of_options[user_answer - 1] # Because indexs start at 0, not 1
+
 
                     option_amount = int(input("Amount: "))
-                    options_dictionary[option] = option_amount
+                    user_dictionary[item][option] = option_amount
+
+                if user_answer == back_number:
+                    break
+
+                else:
+                    print("That wasn't an option")
         
         if user_answer == continue_number:
 
@@ -97,6 +106,11 @@ def delivery_infromation(user_dictionary):
 # Recipt
 def print_recipt(user_dictionary):
     for item in user_dictionary:
+
+        if isinstance(item, dict):
+            print(item)
+            for option in item:
+                print(f"{option} : {item[option]}")
         print(f"{item}: {user_dictionary[item]}") # Check if value is a dictionary so that you can print it acordingingly
 
 # Cancellation/confirmation
@@ -147,7 +161,7 @@ def main_menu():
         ordering_information(temp_dic)
 
         print("3. Delivery/Pick Up Information")
-        # temp_dic = delivery_infromation(temp_dic)
+        delivery_infromation(temp_dic)
 
         print("4. Confirm Order")
         print_recipt(temp_dic)
