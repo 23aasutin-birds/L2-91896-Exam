@@ -1,8 +1,63 @@
+def input_validation(question):
+    while True:
+        try:
+            user_answer = int(input(question))
+            return user_answer
+        except ValueError:
+            print("Please enter an integer not only spaces, nothing or text. Try again.")
+
+def string_validation(question, is_lower = True):
+    while True:
+        user_answer = input(question).strip()
+        if user_answer == "":
+            print("Please enter some text.")
+            continue
+        
+        if is_lower:
+            return user_answer.lower() # for most input validation
+        
+        else:
+            return user_answer.capitalize() # for names
+
+def email_validation(question):
+    while True:
+        user_answer = input(question).strip()
+
+        if user_answer == "":
+            print("Please enter a valid email adress.")
+            continue
+
+        if "@" in user_answer and user_answer[-1].isalpha(): # If @ present in email adress and last character is a letter considered valid email
+            return user_answer
+        else:
+            print("Please enter a valid email adress.")
+
+def phone_validation(question):
+    LONGEST_NUMBER = 11 # So length can be changes easily in the future if regulations change
+    SHORTEST_NUMBER = 9
+    
+    while True:
+        user_answer = string_validation(question) # Regular validation
+        try:
+            user_answer = int(user_answer) # Attemps to convert to string
+            
+            if user_answer >= SHORTEST_NUMBER and user_answer <= LONGEST_NUMBER: # Checks for valid lenth (in NZ)
+                return f"+64{user_answer}"
+            
+            else: # If outside valid range
+                print("Phone numbers must be between 7 and 9 digits long.")
+        
+        except ValueError: # If not 100% integers
+            print("Please enter a valid phone number will integers only.")
+
+
+
+
 # Collects user informaiton
 def user_information(user_dictionary):
-    user_dictionary["Name"] = input("Name: ")
-    user_dictionary["Email"] = input("Email: ")
-    user_dictionary["Number"] = input("Phone Number: ") # Doesn't like the numbers starting with 0, change to start with "64"
+    user_dictionary["Name"] = string_validation("Name: ")
+    user_dictionary["Email"] = email_validation("Email: ")
+    user_dictionary["Number"] = phone_validation("Phone Number: +64") # Doesn't like the numbers starting with 0, change to start with "64"
     return user_dictionary
 
 def print_food_menu(menu):
@@ -30,6 +85,10 @@ def print_food_options(menu, key):
 
     return number
 
+def index_to_key(items, user_answer):
+    list_of_items = list(items.keys()) # Converts the number to the key associated with it
+    return list_of_items[user_answer - 1]
+
 # Collects order
 def ordering_information(user_dictionary):
     menu_items = {
@@ -51,25 +110,25 @@ def ordering_information(user_dictionary):
 
         if user_answer > 0 and user_answer < continue_number: # View a food item
             
-            """Converts to keys"""
-            list_of_items = list(menu_items.keys()) # Converts the number to the key associated with it
-            item = list_of_items[user_answer - 1]
-            print(item)
+            item = index_to_key(menu_items.key(), user_answer) # Convert index to key (for later use)
 
             while True:
-                """Prints food options (eg, V, VE, M)"""
-                back_number = print_food_options(menu_items, item)
+                back_number = print_food_options(menu_items, item) # Print food options
                 user_answer = int(input("> "))
 
-                if user_answer > 0 and user_answer < back_number:
+                if user_answer > 0 and user_answer < back_number: # View the options
+                    
+                    option = index_to_key(menu_items[item], user_answer) # Converts answer to option veiwed
 
-                    """Converts to keys"""
-                    list_of_options = menu_items[item]
-                    option = list_of_options[user_answer - 1] # Because indexs start at 0, not 1
+                    option_amount = int(input("Amount: ")) # Collects amount of the food type
 
-
-                    option_amount = int(input("Amount: "))
-                    user_dictionary[item][option] = option_amount
+                    if len(user_dictionary[item][option]) == 0:
+                        user_dictionary[item][option] = option_amount # Adds it to the dictionary
+                    else:
+                        print(f"This will overwrite the previous order of {user_dictionary[item][option]}. Would you like to continue? \n a. Yes, override and save \n b. No, go back")
+                        user_answer = input("> ")
+                        if user_answer == "a":
+                            user_dictionary[item][option] = option_amount # Add it to the dictionary
 
                 if user_answer == back_number:
                     break
@@ -79,25 +138,23 @@ def ordering_information(user_dictionary):
         
         if user_answer == continue_number:
 
-            print(user_dictionary)
-
-            break
+            return user_dictionary
 
         else:
             print(f"Please enter a number between 1 and {continue_number}.")
 
 # Devlivery/pick up information
 def delivery_infromation(user_dictionary):
-    print("Would you like to:" \
-    "1. Pick Up" \
-    "2. Delivered")
+    print("Would you like to: n\ 1. Pick Up \n 2. Delivered")
     user_answer = input("> ")
 
     if user_answer == "1":
         user_dictionary["Delivery"] = False
+
     if user_answer == "2":
         user_dictionary["Delivery"] = True
         user_dictionary["Adress"] = input("Delivery Address: ")
+
     else:
         print("Please enter either '1' or '2'.")
     
@@ -144,30 +201,32 @@ def main_menu():
     }
 
     all_orders = {
-        145 : order_number
+        1 : order_number
     }
 
     while True:
+        order_number = 1
 
-        temp_dic = {}
+        temp_dict = {}
 
         print("Welcome to Mountain Meals!" \
         "Here you can easily order tasty food.")
 
         print("1. Personal Information")
-        temp_dic = user_information(temp_dic)
+        temp_dict = user_information(temp_dict)
 
         print("2. Pick your food")
-        ordering_information(temp_dic)
+        temp_dict = ordering_information(temp_dict)
 
         print("3. Delivery/Pick Up Information")
-        delivery_infromation(temp_dic)
+        temp_dict = delivery_infromation(temp_dict)
 
         print("4. Confirm Order")
-        print_recipt(temp_dic)
+        print_recipt(temp_dict)
         if order_confirmed():
-            number = 1 # Generate random number
-            all_orders[number] = temp_dic
+            number += 1 # Gets next order number
+            all_orders[number] = temp_dict
+
             print("Thanks for coming to Mountain Meals! We hope you enjoy your food.")
         else:
             print("Your order has been cancalled! We hope you come to Mountain Meals in the future.")
