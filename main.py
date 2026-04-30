@@ -1,6 +1,4 @@
 import os
-
-
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -23,7 +21,7 @@ def string_validation(question, is_lower = True):
             return user_answer.lower() # for most input validation
         
         else:
-            return user_answer.capitalize() # for names
+            return user_answer.title() # for names
 
 def email_validation(question):
     while True:
@@ -39,7 +37,7 @@ def email_validation(question):
             print("Please enter a valid email adress.")
 
 def phone_validation(question):
-    LONGEST_NUMBER = 11 # So length can be changes easily in the future if regulations change
+    LONGEST_NUMBER = 11
     SHORTEST_NUMBER = 9
     
     while True:
@@ -57,26 +55,21 @@ def phone_validation(question):
         except ValueError: # If not 100% integers
             print("Please enter a valid phone number will integers only.")
 
-
-
-
-# Collects user informaiton
-def user_information(user_dictionary):
-    user_dictionary["Name"] = string_validation("Name: ")
-    user_dictionary["Email"] = email_validation("Email: ")
-    user_dictionary["Number"] = phone_validation("Phone Number: +64") # Removed 0 from start of phone numbers, will be recored as string
-    return user_dictionary
+def user_information(order_dictionary):
+    order_dictionary["Name"] = string_validation("Name: ", False)
+    order_dictionary["Email"] = email_validation("Email: ")
+    order_dictionary["Number"] = phone_validation("Phone Number: +64")
+    return order_dictionary
 
 def print_food_menu(menu):
     number = 1
-    for item in menu: # Extracts food items from meun_items (eg, "Dalh with Rice", "Risoto" etc.)
+    for item in menu: # Extracts keys
         
         options = ""
-        for option in menu[item]: # Extracts the next option in the values lists  (eg, "V", "VE", etc.)
-            options =  options + ", " + option # Added all previously extracted options, a ", " and the new options
+        for option in menu[item]: # Extracts keys of nested dictionary  (eg, "V", "VE", etc.)
+            options =  options + ", " + option
         
-        print(f"    {number}. {item} ({options[2:]})") # String splice removes extra ", " from the start of the options string
-        number += 1
+        print(f"    {number}. {item} ({options[2:]})")
     
     print(f"Or:\n   {number}. Save & Continue")
 
@@ -103,11 +96,11 @@ def index_to_key(dictionary, user_answer):
     
     return list_of_items[user_answer - 1]
 
-def collects_order(menu_items, main_dictionary, user_answer):
+def collects_order(menu_items, order_dictionary, user_answer):
     item = index_to_key(menu_items, user_answer) # Convert index to key (for later use)
     while True:
         clear_screen()
-        back_number = print_food_options(menu_items, item, main_dictionary) # Print food options, returns number associated with the "Back to Main Menu" option
+        back_number = print_food_options(menu_items, item, order_dictionary) # Print food options, returns number associated with the "Back to Main Menu" option
         user_answer = int_validation("> ")
 
         if user_answer > 0 and user_answer < back_number: # View the options
@@ -120,42 +113,46 @@ def collects_order(menu_items, main_dictionary, user_answer):
                 else:
                     break
 
-            if main_dictionary[item].get(option, None) == None: # If nothing under that option yet
-                main_dictionary[item][option] = option_amount # Adds it to the dictionary
+            if order_dictionary[item].get(option, None) == None: # If nothing under that option yet
+                order_dictionary[item][option] = option_amount # Adds it to the dictionary
             
             else: # If order already under that option
-                print(f"This will overwrite the previous order of {option}, {item}. Would you like to continue? \n a. Yes, override and save \n b. No, go back")
-                user_answer = string_validation("> ")
-                
-                if user_answer == "a":
-                    main_dictionary[item][option] = option_amount # Adds it to the dictionary
+                while True:
+                    print(f"This will overwrite the previous order of {option}, {item}. Would you like to continue? \n 1. Yes, override and save \n 2. No, go back")
+                    user_answer = int_validation("> ")
+                    
+                    if user_answer == 1:
+                        order_dictionary[item][option] = option_amount # Adds it to the dictionary
+                        break
 
-                else:
-                    continue
+                    elif user_answer == 2:
+                        break
+                    
+                    else:
+                        print("That wasn't a valid option, please enter '1' or '2'.")
 
 
         elif user_answer == back_number:
-            return main_dictionary # Returns updated dictionary
+            return order_dictionary # Returns updated dictionary
 
         else:
             print("That wasn't an option")
 
-def remove_dictionaries(menu_items, dictionary):
-    temp_dictionary = dictionary.copy() # Makes a local copy of the dictionary so that data is not deleted in other parts of the code
+def remove_dictionaries(menu_items, order_dictionary):
+    copy_dictionary = order_dictionary.copy() # Makes a local copy of the dictionary so that data is not deleted in other parts of the code
     for item in menu_items:
-        if temp_dictionary.get(item) == {}: # Removes unnessisary item: {} pairs before returning
-            del temp_dictionary[item]
-    return temp_dictionary
+        if copy_dictionary.get(item) == {}: # Removes unnessisary item: {} pairs before returning
+            del copy_dictionary[item]
+    return copy_dictionary
 
-def has_ordered(dictionary, menu_items):
-    dictionary = remove_dictionaries(menu_items, dictionary)
-    if menu_items.keys() & dictionary.keys() == set(): # Check for lack of common keys between the two dictionaries (no order), returns keys as set
+def has_ordered(order_dictionary, menu_items):
+    order_dictionary = remove_dictionaries(menu_items, order_dictionary)
+    if menu_items.keys() & order_dictionary.keys() == set(): # Check for lack of common keys between the two dictionaries (no order), returns keys as set()
         return False
     else:
         return True
 
-# Collects order
-def ordering_menu(user_dictionary):
+def ordering_menu(order_dictionary):
     menu_items = {
         "Dalh with rice" : ["M", "V", "VE", "GF", "DF"],
         "Risoto" : ["M", "V", "GF"],
@@ -164,32 +161,33 @@ def ordering_menu(user_dictionary):
     }
 
     for item in menu_items:
-        user_dictionary[item] = {} # Added nested item: {} pairs in preperation for order otherwise option: amount pairs have nothing to be placed into
+        order_dictionary[item] = {} # Added nested item: {} pairs in preperation for order otherwise option: amount pairs have nothing to be placed into
 
-    print("Diatery Options are as follows: \n M : Meat \n V : Vegetarian \n VE : Vegan \n GF : Gluten Free \n M : Dairy Free \n")
+    print("Diatary Options are as follows: \n M : Meat \n V : Vegetarian \n VE : Vegan \n GF : Gluten Free \n M : Dairy Free \n")
 
     while True:
 
         print("Food items avalibles:")
         continue_number = print_food_menu(menu_items) # prints all food items, returns the number associated with the "Save & Continue" option
         user_answer = int_validation("> ")
+        clear_screen()
 
         if user_answer > 0 and user_answer < continue_number: # Views a food item
-            clear_screen()
-            user_dictionary = collects_order(menu_items, user_dictionary, user_answer) # Orders and saves
+            order_dictionary = collects_order(menu_items, order_dictionary, user_answer) # Orders and saves
             clear_screen()
         
         elif user_answer == continue_number: # To finish ordering
-            if has_ordered(user_dictionary, menu_items):
-                user_dictionary = remove_dictionaries(menu_items, user_dictionary)
-                return user_dictionary
+            if has_ordered(order_dictionary, menu_items):
+                order_dictionary = remove_dictionaries(menu_items, order_dictionary)
+                return order_dictionary
+            
             else:
+                clear_screen()
                 print("Please order before procceeding.")
 
         else: # Catchs invalid inputs
             print(f"Please enter a number between 1 and {continue_number}.")
 
-# Devlivery/pick up information
 def delivery_infromation(user_dictionary):
     print("Would you like to: \n 1. Pick Up \n 2. Delivered")
     user_answer = int_validation("> ")
@@ -206,7 +204,6 @@ def delivery_infromation(user_dictionary):
     
     return user_dictionary
 
-# Recipt
 def print_recipt(user_dictionary):
     for item in user_dictionary:
         if isinstance(user_dictionary[item], dict): # If value is a dictionary
@@ -216,10 +213,9 @@ def print_recipt(user_dictionary):
         else:
             print(f"{item}: {user_dictionary[item]}") # Else print normally
 
-# Cancellation/confirmation
 def order_confirmed():
     while True:
-        print("Confirm order: \n 1. Confirm \n 2. Cancal")
+        print("\nConfirm order: \n 1. Confirm \n 2. Cancal")
         user_answer = int_validation("> ")
         if user_answer == 1:
             return True
@@ -228,9 +224,9 @@ def order_confirmed():
         else:
             print("Please enter either 'a' or 'b'.")
 
-# Main menu
-def main_menu():
 
+def main_menu():
+    """"""
     all_orders = {}
 
     while True:
@@ -240,7 +236,7 @@ def main_menu():
 
         temp_dict = {}
 
-        print("Welcome to Mountain Meals! n\ Here you can easily order tasty food. n\ ")
+        print("Welcome to Mountain Meals! \nHere you can easily order tasty food. \n ")
 
         print("1. Personal Information \n")
         temp_dict = user_information(temp_dict)
@@ -250,8 +246,6 @@ def main_menu():
         temp_dict = ordering_menu(temp_dict)
         clear_screen()
 
-        print(temp_dict)
-
         print("3. Delivery/Pick Up Information \n")
         temp_dict = delivery_infromation(temp_dict)
         clear_screen()
@@ -260,14 +254,15 @@ def main_menu():
         print_recipt(temp_dict)
         is_confirmed = order_confirmed()
         if is_confirmed:
-            order_number += 1 # Gets next order number
+            order_number += 1  # Gets next order number
             all_orders[order_number] = temp_dict
 
             print("Order confirmed! Thanks for coming to Mountain Meals, we hope you enjoy your food.")
-        
-        elif not is_confirmed: # If not confirmed
+
+        elif not is_confirmed:  # If not confirmed
             print("Your order has been cancalled! We hope you come to Mountain Meals in the future.")
 
         input("\n Enter to continue \n > ")
+
 
 main_menu()
