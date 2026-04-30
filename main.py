@@ -140,6 +140,20 @@ def collects_order(menu_items, main_dictionary, user_answer):
         else:
             print("That wasn't an option")
 
+def remove_dictionaries(menu_items, dictionary):
+    temp_dictionary = dictionary.copy() # Makes a local copy of the dictionary so that data is not deleted in other parts of the code
+    for item in menu_items:
+        if temp_dictionary.get(item) == {}: # Removes unnessisary item: {} pairs before returning
+            del temp_dictionary[item]
+    return temp_dictionary
+
+def has_ordered(dictionary, menu_items):
+    dictionary = remove_dictionaries(menu_items, dictionary)
+    if menu_items.keys() & dictionary.keys() == set(): # Check for lack of common keys between the two dictionaries (no order), returns keys as set
+        return False
+    else:
+        return True
+
 # Collects order
 def ordering_menu(user_dictionary):
     menu_items = {
@@ -166,15 +180,11 @@ def ordering_menu(user_dictionary):
             clear_screen()
         
         elif user_answer == continue_number: # To finish ordering
-            for item in menu_items:
-                if user_dictionary.get(item) == {}: # Removes unnessisary item: {} pairs before returning
-                    user_dictionary.pop(item)
-
-            if menu_items.keys() & user_dictionary.keys() == set(): # Check for lack of common keys between the two dictionaries (no order), returns keys as set
-                print("Please order items before continuing.")
-                continue
-            else:
+            if has_ordered(user_dictionary, menu_items):
+                user_dictionary = remove_dictionaries(menu_items, user_dictionary)
                 return user_dictionary
+            else:
+                print("Please order before procceeding.")
 
         else: # Catchs invalid inputs
             print(f"Please enter a number between 1 and {continue_number}.")
@@ -187,7 +197,7 @@ def delivery_infromation(user_dictionary):
     if user_answer == 1:
         user_dictionary["Delivery"] = "No"
 
-    if user_answer == 2:
+    elif user_answer == 2:
         user_dictionary["Delivery"] = "Yes"
         user_dictionary["Adress"] = string_validation("Delivery Address: ", False)
 
@@ -239,6 +249,8 @@ def main_menu():
         print("2. Pick your food \n")
         temp_dict = ordering_menu(temp_dict)
         clear_screen()
+
+        print(temp_dict)
 
         print("3. Delivery/Pick Up Information \n")
         temp_dict = delivery_infromation(temp_dict)
