@@ -86,6 +86,7 @@ def print_food_menu(menu):
             options = options + ", " + option  # Puts together readable string of options
 
         print(f"{number}. {item} ({options[2:]})")  # Removes excess ", " at the end of string
+        number += 1
 
     print(f"Or:\n   {number}. Save & Continue")
 
@@ -120,8 +121,8 @@ def index_to_key(dictionary, user_answer):
 def collects_order(menu_items, order_dictionary, user_answer):
     """Collect and validate users order and returns updated order dictionary."""
     item = index_to_key(menu_items, user_answer)  # To use for dict[key] method latter
+    clear_screen()
     while True:
-        clear_screen()
         back_number = print_food_options(menu_items, item, order_dictionary)
         user_answer = int_validation("> ")
 
@@ -130,12 +131,13 @@ def collects_order(menu_items, order_dictionary, user_answer):
 
             while True:
                 option_amount = int_validation("Amount: ")
-                if user_answer < 0:
-                    print("You can't have negative orders. Entre 0 if you would like to reset that order.")
+                if user_answer < 0 or user_answer > 20:
+                    print("You can't have negative orders or orders over 20. For bulk orders, please call our office.")
                 else:
                     break
 
             if order_dictionary[item].get(option, None) is None:  # If nothing under that option yet
+                clear_screen()
                 order_dictionary[item][option] = option_amount  # Adds to the dictionary
 
             else:  # If order already under that option
@@ -152,12 +154,15 @@ def collects_order(menu_items, order_dictionary, user_answer):
 
                     else:
                         print("That wasn't a valid option, please enter '1' or '2'.")
+                    
+                    clear_screen()
 
         elif user_answer == back_number:
             return order_dictionary
 
         else:
-            print("That wasn't an option")
+            clear_screen()
+            print("That wasn't an option. Please enter a number indicated.")
 
 
 def remove_dictionaries(menu_items, order_dictionary):
@@ -293,7 +298,7 @@ def main_menu():
             print("Order confirmed! Thanks for coming to Mountain Meals, we hope you enjoy your food.")
 
         elif not is_confirmed:  # If not confirmed
-            print("Your order has been cancalled! We hope you come to Mountain Meals in the future.")
+            print("Your order has been cancalled! We hope you come to Mountain Meals in the future. \nWe will contact you when your order is ready.")
 
         input("\n Enter to continue \n > ")
 
