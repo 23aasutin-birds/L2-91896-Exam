@@ -1,4 +1,6 @@
 import os
+
+
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -73,17 +75,20 @@ def print_food_menu(menu):
         for option in menu[item]: # Extracts the next option in the values lists  (eg, "V", "VE", etc.)
             options =  options + ", " + option # Added all previously extracted options, a ", " and the new options
         
-        print(f"    {number}. {item} ({options[2:]})") # String splice removes extra ", " for the start of the options string
+        print(f"    {number}. {item} ({options[2:]})") # String splice removes extra ", " from the start of the options string
         number += 1
     
     print(f"Or:\n   {number}. Save & Continue")
 
     return number
 
-def print_food_options(menu, key):
+def print_food_options(menu, key, order_dictionary):
     number = 1
     for option in menu[key]:
-        print(f"    {number}. {option}")
+        try:
+            print(f"    {number}. {option} ({order_dictionary[key][option]})")
+        except KeyError:
+            print(f"    {number}. {option} (0)")
         number += 1
     
     print(f"Or:\n   {number}. To Main Menu")
@@ -102,8 +107,7 @@ def collects_order(menu_items, main_dictionary, user_answer):
     item = index_to_key(menu_items, user_answer) # Convert index to key (for later use)
     while True:
         clear_screen()
-        print(item)
-        back_number = print_food_options(menu_items, item) # Print food options, returns number associated with the "Back to Main Menu" option
+        back_number = print_food_options(menu_items, item, main_dictionary) # Print food options, returns number associated with the "Back to Main Menu" option
         user_answer = int_validation("> ")
 
         if user_answer > 0 and user_answer < back_number: # View the options
@@ -136,7 +140,7 @@ def collects_order(menu_items, main_dictionary, user_answer):
         else:
             print("That wasn't an option")
 
-# Collects order (should make sure users have ordered stuff)
+# Collects order
 def ordering_menu(user_dictionary):
     menu_items = {
         "Dalh with rice" : ["M", "V", "VE", "GF", "DF"],
@@ -161,12 +165,16 @@ def ordering_menu(user_dictionary):
             user_dictionary = collects_order(menu_items, user_dictionary, user_answer) # Orders and saves
             clear_screen()
         
-        elif user_answer == continue_number: # To finishe ordering
+        elif user_answer == continue_number: # To finish ordering
             for item in menu_items:
                 if user_dictionary.get(item) == {}: # Removes unnessisary item: {} pairs before returning
                     user_dictionary.pop(item)
-            
-            return user_dictionary
+
+            if menu_items.keys() & user_dictionary.keys() == set(): # Check for lack of common keys between the two dictionaries (no order), returns keys as set
+                print("Please order items before continuing.")
+                continue
+            else:
+                return user_dictionary
 
         else: # Catchs invalid inputs
             print(f"Please enter a number between 1 and {continue_number}.")
