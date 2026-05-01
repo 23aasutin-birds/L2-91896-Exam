@@ -17,13 +17,19 @@ def int_validation(question):
             print("Please enter an integer not only spaces, nothing or text. Try again.")
 
 
-def string_validation(question, is_lower=True):
+def string_validation(question, is_lower=True, is_letters=False):
     """Return the user's string input striped, lowered/titled and checked in case of no characters."""
     while True:
         user_answer = input(question).strip()
         if user_answer == "":
             print("Please enter some text.")
             continue
+
+        if is_letters:
+            temp_answer = user_answer.replace(" ", "")
+            if not temp_answer.isalpha():
+                print("Please enter only letters.")
+                continue
 
         if is_lower:
             return user_answer.lower()  # For most input validation
@@ -35,13 +41,13 @@ def string_validation(question, is_lower=True):
 def email_validation(question):
     """Return the user's email that contains a @ and ends in a letter (there was only so much I could do)."""
     while True:
-        user_answer = input(question).strip()
+        user_answer = string_validation(question).strip()
 
         if user_answer == "":
             print("Please enter a valid email adress.")
             continue
 
-        if "@" in user_answer and user_answer[-1].isalpha(): # Check for @ and if last character is a letter
+        if "@" in user_answer and user_answer[-1].isalpha() and user_answer[0] != "@": # Check for @, if last character is a letter and there is a character before the '@'
             return user_answer
         else:
             print("Please enter a valid email adress.")
@@ -70,7 +76,7 @@ def phone_validation(question):
 
 def user_information(order_dictionary):
     """Collect all user information and return updated order dictionary."""
-    order_dictionary["Name"] = string_validation("Name: ", False)
+    order_dictionary["Name"] = string_validation("Name: ", False, True)
     order_dictionary["Email"] = email_validation("Email: ")
     order_dictionary["Number"] = phone_validation("Phone Number: +64")
     return order_dictionary
@@ -118,6 +124,38 @@ def index_to_key(dictionary, user_answer):
     return list_of_items[user_answer - 1]  # Conpensates for index's starting at 0
 
 
+def collect_amount():
+    while True:
+        option_amount = int_validation("Amount: ")
+        if option_amount < 0 or option_amount > 20:
+            print("You can't have negative orders or orders over 20. For bulk orders, please call our office.")
+        else:
+            return option_amount
+
+
+def overwrite_order(option_amount, item, option, order_dictionary):
+    while True:
+        print(f"This will overwrite the previous order of {option}, {item}. Would you like to continue? \n 1. Yes, override and save \n 2. No, go back")
+        user_answer = int_validation("> ")
+
+        if user_answer == 1:
+            if option_amount == 0:
+                del order_dictionary[item][option] # Global delete is fine in this case, .copy() not needed
+                break
+            else:
+                order_dictionary[item][option] = option_amount  # Adds to the dictionary
+                break
+
+        elif user_answer == 2:
+            break
+
+        else:
+            print("That wasn't a valid option, please enter '1' or '2'.")
+
+    clear_screen()
+    return order_dictionary
+
+
 def collects_order(menu_items, order_dictionary, user_answer):
     """Collect and validate users order and returns updated order dictionary."""
     item = index_to_key(menu_items, user_answer)  # To use for dict[key] method latter
@@ -129,33 +167,14 @@ def collects_order(menu_items, order_dictionary, user_answer):
         if user_answer > 0 and user_answer < back_number:  # To view item options
             option = index_to_key(menu_items[item], user_answer)  # To use for dict[key] method latter
 
-            while True:
-                option_amount = int_validation("Amount: ")
-                if user_answer < 0 or user_answer > 20:
-                    print("You can't have negative orders or orders over 20. For bulk orders, please call our office.")
-                else:
-                    break
+            option_amount = collect_amount()
 
             if order_dictionary[item].get(option, None) is None:  # If nothing under that option yet
                 clear_screen()
                 order_dictionary[item][option] = option_amount  # Adds to the dictionary
 
             else:  # If order already under that option
-                while True:
-                    print(f"This will overwrite the previous order of {option}, {item}. Would you like to continue? \n 1. Yes, override and save \n 2. No, go back")
-                    user_answer = int_validation("> ")
-
-                    if user_answer == 1:
-                        order_dictionary[item][option] = option_amount  # Adds to the dictionary
-                        break
-
-                    elif user_answer == 2:
-                        break
-
-                    else:
-                        print("That wasn't a valid option, please enter '1' or '2'.")
-                    
-                    clear_screen()
+                order_dictionary = overwrite_order(option_amount, item, option, order_dictionary)
 
         elif user_answer == back_number:
             return order_dictionary
@@ -224,17 +243,21 @@ def ordering_menu(order_dictionary):
 def delivery_infromation(user_dictionary):
     """Return wether user prefers pick up or delivery (including where if the latter)."""
     print("Would you like to: \n 1. Pick Up \n 2. Delivered")
-    user_answer = int_validation("> ")
+    while True:
+        user_answer = int_validation("> ")
 
-    if user_answer == 1:
-        user_dictionary["Delivery"] = "No"
+        if user_answer == 1:
+            user_dictionary["Delivery"] = "No"
+            break
 
-    elif user_answer == 2:
-        user_dictionary["Delivery"] = "Yes"
-        user_dictionary["Adress"] = string_validation("Delivery Address: ", False)
+        elif user_answer == 2:
+            user_dictionary["Delivery"] = "Yes"
+            user_dictionary["Adress"] = string_validation("Delivery Address: ", False)
+            break
 
-    else:
-        print("Please enter either '1' or '2'.")
+        else:
+            print("Please enter either '1' or '2'.")
+            continue
 
     return user_dictionary
 
